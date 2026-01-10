@@ -1,26 +1,37 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@theme {
+  --color-background: #0A0A0A;
+  --color-foreground: #ededed;
+  --color-sync-blue: #3b82f6;
+  --color-sync-blue-dim: #1e40af;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* 
+  The project was initialized with Tailwind CSS v4 alpha/beta via next-app template which uses @import "tailwindcss"; 
+  Usage of @theme is the V4 way. If V3 compatibility is needed in future, this can be adjusted.
+  For now, adhering to standard V4 setup provided by create-next-app.
+*/
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--color-background);
+  color: var(--color-foreground);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes drift {
+  from {
+    background-position: 0 0;
+  }
+
+  to {
+    background-position: 0 81px;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+
+.animate-drift {
+  animation: drift 20s linear infinite;
 }
