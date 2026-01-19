@@ -29,7 +29,7 @@ export default function AuthButtons() {
         console.error(data.error);
       }
       if (data.success) {
-        router.push("/lobby");
+        router.push("/start");
         console.log("Received data from session:", data);
       }
     } catch {
@@ -45,8 +45,15 @@ export default function AuthButtons() {
       tokenToServer(token);
 
       console.log(token);
-    } catch (error) {
-      console.error(error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      // Ignore popup closed by user error
+      if (error?.code === "auth/popup-closed-by-user") {
+        console.log("Sign-in popup was closed by user");
+        return;
+      }
+      console.error("Google login error:", error);
+      alert(`Login failed: ${error?.message || "Please try again"}`);
     } finally {
       setIsLoading(false);
     }
