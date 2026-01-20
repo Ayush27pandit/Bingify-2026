@@ -12,81 +12,32 @@ import { firebaseLogout } from "@/lib/auth";
 import { useSocketConnection } from "@/lib/useSocketConnection";
 import { useRoomConnection } from "@/lib/useRoomConnection";
 import { useRouter } from "next/navigation";
+import { getAuthHeader } from "@/lib/auth-token";
+import { MovieRoom } from "@/components/lobby/MovieRoom";
 
 const EASE_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
-const DUMMY_MEDIA: MediaItem[] = [
-  {
-    id: "1",
-    title: "Interstellar",
-    image: "https://image.tmdb.org/t/p/w500/gEU2QniL6C8zEfVIuM8nCRm83w2.jpg",
-    year: "2014",
-    genre: "Sci-Fi",
-    duration: "2h 49m",
-  },
-  {
-    id: "2",
-    title: "Dune: Part Two",
-    image: "https://image.tmdb.org/t/p/w500/1pdfLvkbY9ohJlCjQH2CZjjYVvJ.jpg",
-    year: "2024",
-    genre: "Sci-Fi",
-    duration: "2h 46m",
-  },
-  {
-    id: "3",
-    title: "Oppenheimer",
-    image: "https://image.tmdb.org/t/p/w500/8Gxv8gSFCU0XGDykEGv7zR1n2ua.jpg",
-    year: "2023",
-    genre: "Drama",
-    duration: "3h 00m",
-  },
-  {
-    id: "4",
-    title: "The Batman",
-    image: "https://image.tmdb.org/t/p/w500/74xTEgt7R36Fpooo50r9T25onhq.jpg",
-    year: "2022",
-    genre: "Action",
-    duration: "2h 56m",
-  },
-  {
-    id: "5",
-    title: "Blade Runner 2049",
-    image: "https://image.tmdb.org/t/p/w500/gajva2L0rPYkEWjzgFlBXCAVBE5.jpg",
-    year: "2017",
-    genre: "Sci-Fi",
-    duration: "2h 44m",
-  },
-  {
-    id: "6",
-    title: "Arrival",
-    image: "https://image.tmdb.org/t/p/w500/x2FJsf1ElAgr63C3cRtHPqqSIwb.jpg",
-    year: "2016",
-    genre: "Sci-Fi",
-    duration: "1h 56m",
-  },
-  {
-    id: "7",
-    title: "Inception",
-    image: "https://image.tmdb.org/t/p/w500/9gk7admal4ZLVD9NdWh0nEmzAde.jpg",
-    year: "2010",
-    genre: "Sci-Fi",
-    duration: "2h 28m",
-  },
-  {
-    id: "8",
-    title: "Everything Everywhere All At Once",
-    image: "https://image.tmdb.org/t/p/w500/w3LxiVYdWWRvEVdn5RYq6jIqkb1.jpg",
-    year: "2022",
-    genre: "Adventure",
-    duration: "2h 19m",
-  },
-];
 
-const GENRES = ["Action", "Sci-Fi", "Drama", "Adventure"];
+
+const GENRES = [
+  "Action",
+  "Sci-Fi",
+  "Drama",
+  "Adventure",
+  "Romance",
+  "Comedy",
+  "Horror",
+  "Thriller",
+  "Fantasy",
+  "Animation",
+  "Documentary",
+];
 
 interface RoomMeta {
   roomId: string;
   roomPassword: string;
+  muxAccessId: string;
+  muxPlaybackId: string;
   hostToken: string;
   joinToken: string;
 }
@@ -97,31 +48,67 @@ export default function LobbyPage() {
   const [selectedGenre, setSelectedGenre] = useState("All");
   const router = useRouter();
   const { isConnected, isConnecting } = useSocketConnection();
+  const [movieLibrary, setMovieLibrary] = useState<MediaItem[]>([]);
+  const [isStarted, setIsStarted] = useState(false);
 
-  const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(() => {
-    const saved = sessionStorage.getItem("roomMeta");
-    return saved ? JSON.parse(saved) : null;
-  });
-
-  const roomId = roomMeta?.roomId ?? null;
-  const joinToken = roomMeta?.joinToken ?? null;
-  const hostToken = roomMeta?.hostToken ?? null;
+  const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(null);
+  const [isHydrated, setIsHydrated] = useState(false);
 
   useEffect(() => {
-    if (!roomMeta) {
+    const saved = sessionStorage.getItem("roomMeta");
+    if (saved) {
+      setRoomMeta(JSON.parse(saved));
+    }
+    setIsHydrated(true);
+  }, []);
+
+  const ROOM_ID = roomMeta?.roomId || "";
+
+  useEffect(() => {
+    if (isHydrated && !roomMeta) {
       router.push("/start");
     }
-  }, [roomMeta, router]);
+  }, [isHydrated, roomMeta, router]);
   // Room connection
 
-  //getting room id from session storage
+  useEffect(() => {
+    const fetchMovies = async () => {
+      if (!isHydrated || !ROOM_ID) return;
+      try {
+        const authHeader = await getAuthHeader();
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/movie-library`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              ...authHeader,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched movies, Movies Count=", data.count);
+          setMovieLibrary(data.movies);
+        } else {
+          console.error("Failed to fetch movies:", response.statusText);
+        }
+      } catch (error) {
+        console.error("Error fetching movies:", error);
+      }
+    };
 
-  const ROOM_ID = roomId!; // Replace with dynamic room ID from URL params later
+    fetchMovies();
+  }, [ROOM_ID]);
+
+
+
+  // Room connection status
   const { roomConnected, error } = useRoomConnection(ROOM_ID);
 
   // Filter Logic
   const filteredMedia = useMemo(() => {
-    return DUMMY_MEDIA.filter((item) => {
+    return movieLibrary.filter((item) => {
       const matchesSearch = item.title
         .toLowerCase()
         .includes(searchQuery.toLowerCase());
@@ -129,11 +116,39 @@ export default function LobbyPage() {
         selectedGenre === "All" || item.genre === selectedGenre;
       return matchesSearch && matchesGenre;
     });
-  }, [searchQuery, selectedGenre]);
+  }, [movieLibrary, searchQuery, selectedGenre]);
+
+
 
   // Mock starting a session
-  const handleStartSession = () => {
-    alert(`Starting session for: ${selectedMedia?.title} (Demo)`);
+  const handleStartSession = async () => {
+    if (!selectedMedia || !ROOM_ID) return;
+
+    try {
+      const authHeader = await getAuthHeader();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/rooms/${ROOM_ID}/activate`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader,
+        },
+        body: JSON.stringify({
+          isActive: true,
+          movieId: selectedMedia.id
+        })
+      });
+
+      if (response.ok) {
+        setIsStarted(true);
+      } else {
+        console.warn("Backend activation failed, but proceeding for demo");
+        setIsStarted(true);
+      }
+    } catch (error) {
+      console.error("Error activating room:", error);
+      // Fallback for demo if backend endpoint doesn't exist yet
+      setIsStarted(true);
+    }
   };
   const handleLogout = async () => {
     // 1️⃣ Clear backend session
@@ -141,6 +156,10 @@ export default function LobbyPage() {
       method: "POST",
       credentials: "include",
     });
+
+    //delete token from session storage
+    sessionStorage.removeItem("roomMeta");
+    sessionStorage.removeItem("firebaseIdToken");
 
     // 2️⃣ Sign out Firebase client
     await firebaseLogout();
@@ -157,14 +176,14 @@ export default function LobbyPage() {
       </div>
 
       {/* Connection Status Indicator */}
-      {isConnecting && !isConnected && (
+      {isHydrated && isConnecting && !isConnected && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
           <Loader className="h-4 w-4 animate-spin text-yellow-400" />
           <span className="text-sm text-yellow-300">Reconnecting...</span>
         </div>
       )}
 
-      {isConnected && (
+      {isHydrated && isConnected && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-lg">
           <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
           <span className="text-sm text-green-300">Connected</span>
@@ -172,7 +191,7 @@ export default function LobbyPage() {
       )}
 
       {/* Room Error */}
-      {error && (
+      {isHydrated && error && (
         <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg">
           <AlertCircle className="h-4 w-4 text-red-400" />
           <span className="text-sm text-red-300">{error}</span>
@@ -180,7 +199,7 @@ export default function LobbyPage() {
       )}
 
       {/* Room Connected */}
-      {roomConnected && !error && (
+      {isHydrated && roomConnected && !error && (
         <div className="fixed top-16 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-lg">
           <div className="h-2 w-2 bg-blue-400 rounded-full animate-pulse" />
           <span className="text-sm text-blue-300">Joined room: {ROOM_ID}</span>
@@ -191,60 +210,75 @@ export default function LobbyPage() {
       <div className="relative z-10 flex flex-col min-h-screen">
         <Navbar />
 
-        {/* Room Header - Credentials */}
-        <div className="mt-20 flex gap-5">
-          <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} />
-          <button onClick={handleLogout}>Logout </button>
-        </div>
+        {isStarted && selectedMedia ? (
+          <MovieRoom
+            media={selectedMedia}
+            roomId={ROOM_ID}
+            onLeave={() => setIsStarted(false)}
+          />
+        ) : (
+          <>
+            {/* Room Header - Credentials */}
+            <div className="mt-20 flex gap-5">
+              <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} />
+              <button
+                onClick={handleLogout}
+                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium transition-all"
+              >
+                Logout
+              </button>
+            </div>
 
-        {/* Content Area */}
-        <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
-          {/* Section Heading */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.1 }}
-            className="text-center mb-8"
-          >
-            <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">
-              What should we watch?
-            </h1>
-            <p className="text-zinc-400">Pick a movie to start the room.</p>
-          </motion.div>
+            {/* Content Area */}
+            <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
+              {/* Section Heading */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.1 }}
+                className="text-center mb-8"
+              >
+                <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">
+                  What should we watch?
+                </h1>
+                <p className="text-zinc-400">Pick a movie to start the room.</p>
+              </motion.div>
 
-          {/* Filters */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.15 }}
-          >
-            <MediaFilters
-              searchQuery={searchQuery}
-              setSearchQuery={setSearchQuery}
-              selectedGenre={selectedGenre}
-              setSelectedGenre={setSelectedGenre}
-              genres={GENRES}
-            />
-          </motion.div>
+              {/* Filters */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.15 }}
+              >
+                <MediaFilters
+                  searchQuery={searchQuery}
+                  setSearchQuery={setSearchQuery}
+                  selectedGenre={selectedGenre}
+                  setSelectedGenre={setSelectedGenre}
+                  genres={GENRES}
+                />
+              </motion.div>
 
-          {/* Grid */}
-          <motion.div
-            initial={{ opacity: 0, y: 40 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, ease: EASE_EXPO, delay: 0.2 }}
-            className="pb-32"
-          >
-            <MediaGrid
-              items={filteredMedia}
-              onSelect={setSelectedMedia}
-              selectedId={selectedMedia?.id || null}
-            />
-          </motion.div>
-        </div>
+              {/* Grid */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.8, ease: EASE_EXPO, delay: 0.2 }}
+                className="pb-32"
+              >
+                <MediaGrid
+                  items={filteredMedia}
+                  onSelect={setSelectedMedia}
+                  selectedId={selectedMedia?.id || null}
+                />
+              </motion.div>
+            </div>
+          </>
+        )}
 
         {/* Floating Lower Bar (Action Bar) */}
         <AnimatePresence>
-          {selectedMedia && (
+          {selectedMedia && !isStarted && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -257,7 +291,7 @@ export default function LobbyPage() {
                   <div className="flex items-center gap-4">
                     <div className="h-12 w-8 bg-zinc-800 rounded overflow-hidden relative">
                       <img
-                        src={selectedMedia.image}
+                        src={selectedMedia.thumbnailUrl}
                         className="object-cover h-full w-full"
                         alt=""
                       />
