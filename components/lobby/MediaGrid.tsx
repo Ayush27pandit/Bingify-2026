@@ -13,8 +13,8 @@ export interface MediaItem {
   description: string;
   thumbnailUrl: string;
   rating: number;
-  muxPlaybackId?: string;
-  muxAssetId?: string;
+  muxAssetId: string;
+  muxPlaybackId: string;
 }
 
 interface MediaGridProps {
@@ -56,7 +56,7 @@ export function MediaGrid({ items, onSelect, selectedId }: MediaGridProps) {
               }`}
           >
             {/* Aspect Ratio Container */}
-            <div className="aspect-[2/3] relative bg-zinc-800">
+            <div className="aspect-[2/3] relative bg-zinc-800" >
               <Image
                 src={item.thumbnailUrl}
                 alt={item.title}

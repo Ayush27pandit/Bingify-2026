@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Plus, Users, ArrowRight } from "lucide-react";
 import { ParticleBackground } from "@/components/landing/ParticleBackground";
-import { Navbar } from "@/components/landing/Navbar";
+import { Header } from "@/components/shared/Header";
 import { useRouter } from "next/navigation";
 import { getAuthHeader } from "@/lib/auth-token";
 
@@ -63,7 +63,7 @@ export default function StartPage() {
 
   return (
     <main className="min-h-screen bg-[#09090B] relative overflow-hidden font-sans selection:bg-blue-500/30">
-      <Navbar />
+      <Header />
       <ParticleBackground />
 
       {/* Gradients */}
@@ -107,11 +107,10 @@ export default function StartPage() {
             <div className="flex border-b border-white/5">
               <button
                 onClick={() => setMode("create")}
-                className={`flex-1 py-4 text-sm font-medium transition-colors relative ${
-                  mode === "create"
-                    ? "text-white"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }`}
+                className={`flex-1 py-4 text-sm font-medium transition-colors relative ${mode === "create"
+                  ? "text-white"
+                  : "text-zinc-500 hover:text-zinc-300"
+                  }`}
               >
                 Create Room
                 {mode === "create" && (
@@ -123,11 +122,10 @@ export default function StartPage() {
               </button>
               <button
                 onClick={() => setMode("join")}
-                className={`flex-1 py-4 text-sm font-medium transition-colors relative ${
-                  mode === "join"
-                    ? "text-white"
-                    : "text-zinc-500 hover:text-zinc-300"
-                }`}
+                className={`flex-1 py-4 text-sm font-medium transition-colors relative ${mode === "join"
+                  ? "text-white"
+                  : "text-zinc-500 hover:text-zinc-300"
+                  }`}
               >
                 Join Room
                 {mode === "join" && (

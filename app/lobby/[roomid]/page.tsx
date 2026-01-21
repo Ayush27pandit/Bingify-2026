@@ -2,13 +2,12 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navbar } from "@/components/landing/Navbar";
-import { ParticleBackground } from "@/components/landing/ParticleBackground";
+import { Header } from "@/components/shared/Header";
+
 import { RoomHeader } from "@/components/lobby/RoomHeader";
 import { MediaGrid, MediaItem } from "@/components/lobby/MediaGrid";
 import { MediaFilters } from "@/components/lobby/MediaFilters";
 import { Play, Loader, AlertCircle } from "lucide-react";
-import { firebaseLogout } from "@/lib/auth";
 import { useSocketConnection } from "@/lib/useSocketConnection";
 import { useRoomConnection } from "@/lib/useRoomConnection";
 import { useRouter } from "next/navigation";
@@ -49,7 +48,7 @@ export default function LobbyPage() {
   const router = useRouter();
   const { isConnected, isConnecting } = useSocketConnection();
   const [movieLibrary, setMovieLibrary] = useState<MediaItem[]>([]);
-  const [isStarted, setIsStarted] = useState(false);
+
 
   const [roomMeta, setRoomMeta] = useState<RoomMeta | null>(null);
   const [isHydrated, setIsHydrated] = useState(false);
@@ -66,7 +65,7 @@ export default function LobbyPage() {
 
   useEffect(() => {
     if (isHydrated && !roomMeta) {
-      router.push("/start");
+      router.push("/auth");
     }
   }, [isHydrated, roomMeta, router]);
   // Room connection
@@ -126,52 +125,36 @@ export default function LobbyPage() {
 
     try {
       const authHeader = await getAuthHeader();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/rooms/${ROOM_ID}/activate`, {
-        method: "PATCH",
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/activate-room`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           ...authHeader,
         },
         body: JSON.stringify({
-          isActive: true,
+          roomId: ROOM_ID,
           movieId: selectedMedia.id
+
         })
       });
 
       if (response.ok) {
-        setIsStarted(true);
+        router.push(`/lobby/${ROOM_ID}/activate?movieId=${selectedMedia.id}`);
       } else {
         console.warn("Backend activation failed, but proceeding for demo");
-        setIsStarted(true);
+        router.push(`/lobby/${ROOM_ID}/activate?movieId=${selectedMedia.id}`);
       }
     } catch (error) {
       console.error("Error activating room:", error);
       // Fallback for demo if backend endpoint doesn't exist yet
-      setIsStarted(true);
+      router.push(`/lobby/${ROOM_ID}/activate?movieId=${selectedMedia.id}`);
     }
   };
-  const handleLogout = async () => {
-    // 1️⃣ Clear backend session
-    await fetch(` ${process.env.NEXT_PUBLIC_BACKEND_URL}/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
 
-    //delete token from session storage
-    sessionStorage.removeItem("roomMeta");
-    sessionStorage.removeItem("firebaseIdToken");
-
-    // 2️⃣ Sign out Firebase client
-    await firebaseLogout();
-
-    // 3️⃣ Redirect
-    router.replace("/auth");
-  };
   return (
     <main className="min-h-screen bg-[#09090B] relative overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Backgrounds */}
       <div className="fixed inset-0 z-0">
-        <ParticleBackground />
         <div className="absolute inset-0 bg-linear-to-b from-blue-950/20 via-transparent to-purple-950/10 pointer-events-none" />
       </div>
 
@@ -208,77 +191,63 @@ export default function LobbyPage() {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Navbar />
+        <Header />
 
-        {isStarted && selectedMedia ? (
-          <MovieRoom
-            media={selectedMedia}
-            roomId={ROOM_ID}
-            onLeave={() => setIsStarted(false)}
-          />
-        ) : (
-          <>
-            {/* Room Header - Credentials */}
-            <div className="mt-20 flex gap-5">
-              <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} />
-              <button
-                onClick={handleLogout}
-                className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl text-sm font-medium transition-all"
-              >
-                Logout
-              </button>
-            </div>
+        {/* Content Area */}
+        <div className="mt-20 flex gap-5">
+          <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} />
 
-            {/* Content Area */}
-            <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
-              {/* Section Heading */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.1 }}
-                className="text-center mb-8"
-              >
-                <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">
-                  What should we watch?
-                </h1>
-                <p className="text-zinc-400">Pick a movie to start the room.</p>
-              </motion.div>
+        </div>
 
-              {/* Filters */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.15 }}
-              >
-                <MediaFilters
-                  searchQuery={searchQuery}
-                  setSearchQuery={setSearchQuery}
-                  selectedGenre={selectedGenre}
-                  setSelectedGenre={setSelectedGenre}
-                  genres={GENRES}
-                />
-              </motion.div>
+        {/* Content Area */}
+        <div className="container mx-auto px-6 py-12 flex-1 flex flex-col">
+          {/* Section Heading */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.1 }}
+            className="text-center mb-8"
+          >
+            <h1 className="text-2xl md:text-3xl font-semibold text-white mb-2">
+              What should we watch?
+            </h1>
+            <p className="text-zinc-400">Pick a movie to start the room.</p>
+          </motion.div>
 
-              {/* Grid */}
-              <motion.div
-                initial={{ opacity: 0, y: 40 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, ease: EASE_EXPO, delay: 0.2 }}
-                className="pb-32"
-              >
-                <MediaGrid
-                  items={filteredMedia}
-                  onSelect={setSelectedMedia}
-                  selectedId={selectedMedia?.id || null}
-                />
-              </motion.div>
-            </div>
-          </>
-        )}
+          {/* Filters */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, ease: EASE_EXPO, delay: 0.15 }}
+          >
+            <MediaFilters
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              selectedGenre={selectedGenre}
+              setSelectedGenre={setSelectedGenre}
+              genres={GENRES}
+            />
+          </motion.div>
+
+          {/* Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8, ease: EASE_EXPO, delay: 0.2 }}
+            className="pb-32"
+          >
+            <MediaGrid
+              items={filteredMedia}
+              onSelect={setSelectedMedia}
+              selectedId={selectedMedia?.id || null}
+            />
+          </motion.div>
+        </div>
+
 
         {/* Floating Lower Bar (Action Bar) */}
         <AnimatePresence>
-          {selectedMedia && !isStarted && (
+          {selectedMedia && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
@@ -319,6 +288,6 @@ export default function LobbyPage() {
           )}
         </AnimatePresence>
       </div>
-    </main>
+    </main >
   );
 }

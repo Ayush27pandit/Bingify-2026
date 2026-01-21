@@ -1,16 +1,23 @@
 "use client";
 
+import { useState } from "react";
+
 import { motion } from "framer-motion";
 import { Maximize2, Mic, MicOff, Video, VideoOff, PhoneOff, Settings, Users, Play } from "lucide-react";
+import MuxPlayer from "@mux/mux-player-react";
 import { MediaItem } from "./MediaGrid";
 
 interface MovieRoomProps {
     media: MediaItem;
     roomId: string;
+    muxPlaybackId: string;
+    muxAssetId: string;
     onLeave: () => void;
 }
 
-export function MovieRoom({ media, roomId, onLeave }: MovieRoomProps) {
+export function MovieRoom({ media, roomId, muxPlaybackId, muxAssetId, onLeave }: MovieRoomProps) {
+    const [isPlayerReady, setIsPlayerReady] = useState(false);
+    const [hasStarted, setHasStarted] = useState(false);
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] mt-20 gap-6 px-6 pb-6 overflow-hidden">
             <div className="flex flex-1 gap-6 min-h-0">
@@ -22,18 +29,60 @@ export function MovieRoom({ media, roomId, onLeave }: MovieRoomProps) {
                 >
                     {/* Placeholder for Mux Player / Video */}
                     <div className="absolute inset-0 flex items-center justify-center bg-zinc-900/50">
-                        <img
-                            src={media.thumbnailUrl}
-                            className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-20"
-                            alt=""
-                        />
-                        <div className="relative text-center">
-                            <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
-                                <Maximize2 className="text-white h-8 w-8" />
+                        {/* Till video is not ready show thumbnail*/}
+                        {!isPlayerReady && (
+                            <div className="absolute inset-0 z-10 flex items-center justify-center bg-zinc-900">
+                                <img
+                                    src={media.thumbnailUrl}
+                                    className="absolute inset-0 w-full h-full object-cover blur-3xl opacity-20"
+                                    alt=""
+                                />
+                                <div className="relative text-center">
+                                    <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center mx-auto mb-4 animate-pulse">
+                                        <Maximize2 className="text-white h-8 w-8" />
+                                    </div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">{media.title}</h2>
+                                    <p className="text-zinc-400">Loading stream...</p>
+                                </div>
                             </div>
-                            <h2 className="text-2xl font-bold text-white mb-2">{media.title}</h2>
-                            <p className="text-zinc-400">Waiting for stream to initialize...</p>
-                        </div>
+                        )}
+                        {/* Start Button Overlay */}
+                        {isPlayerReady && !hasStarted && (
+                            <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                                <motion.button
+                                    whileHover={{ scale: 1.05 }}
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={() => {
+                                        setHasStarted(true);
+                                        // Auto-play will be handled by prop or state effect if needed, 
+                                        // or we can just rely on the user clicking play on the player if we don't force it.
+                                        // But typically "Start Movie" implies immediate playback.
+                                        // We will leave the actual .play() call to the user interaction with the player 
+                                        // OR if we had a ref we could call it. 
+                                        // For now, removing the overlay reveals the player. 
+                                        // If we want it to actually start playing, we should use autoPlay={hasStarted} effectively.
+                                    }}
+                                    className="group relative flex items-center gap-3 px-8 py-4 bg-white text-black rounded-full font-bold text-lg shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] hover:shadow-[0_0_60px_-10px_rgba(255,255,255,0.5)] transition-shadow"
+                                >
+                                    <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center group-hover:scale-110 transition-transform">
+                                        <Play className="w-5 h-5 text-white fill-white ml-0.5" />
+                                    </div>
+                                    Start Movie
+                                </motion.button>
+                            </div>
+                        )}
+
+                        <MuxPlayer
+                            playbackId={muxPlaybackId}
+                            metadata={{
+                                video_title: media.title
+                            }}
+                            className={`w-full h-full transition-opacity duration-700 ${isPlayerReady ? 'opacity-100' : 'opacity-0'}`}
+                            onCanPlay={() => setIsPlayerReady(true)}
+                            autoPlay={hasStarted}
+                            accentColor="#2563eb"
+                        />
+
                     </div>
 
                     {/* Video Controls Overlay */}

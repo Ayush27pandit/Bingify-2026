@@ -11,7 +11,7 @@ const EASE_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 export default function AuthPage() {
     return (
         <main className="relative min-h-screen overflow-hidden bg-[#09090B]">
-            <Navbar />
+
 
             {/* Gradient overlays for depth - matching Hero but without particles */}
             <div className="absolute inset-0 bg-gradient-to-b from-blue-950/20 via-transparent to-purple-950/10 pointer-events-none" />
