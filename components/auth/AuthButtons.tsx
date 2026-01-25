@@ -15,6 +15,9 @@ export default function AuthButtons() {
   const router = useRouter();
 
   const tokenToServer = async (token: string) => {
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("firebaseIdToken", token);
+    }
     try {
       const response = await fetch("http://localhost:8000/auth/session", {
         method: "POST",
@@ -100,17 +103,15 @@ export default function AuthButtons() {
         />
         <button
           onClick={() => setMode("login")}
-          className={`relative z-10 flex-1 py-2 text-sm font-medium transition-colors ${
-            mode === "login" ? "text-black" : "text-zinc-500 hover:text-white"
-          }`}
+          className={`relative z-10 flex-1 py-2 text-sm font-medium transition-colors ${mode === "login" ? "text-black" : "text-zinc-500 hover:text-white"
+            }`}
         >
           Login
         </button>
         <button
           onClick={() => setMode("signup")}
-          className={`relative z-10 flex-1 py-2 text-sm font-medium transition-colors ${
-            mode === "signup" ? "text-black" : "text-zinc-500 hover:text-white"
-          }`}
+          className={`relative z-10 flex-1 py-2 text-sm font-medium transition-colors ${mode === "signup" ? "text-black" : "text-zinc-500 hover:text-white"
+            }`}
         >
           Sign Up
         </button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, use } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Header } from "@/components/shared/Header";
 
@@ -41,7 +41,9 @@ interface RoomMeta {
   joinToken: string;
 }
 
-export default function LobbyPage() {
+export default function LobbyPage({ params }: { params: Promise<{ roomid: string }> }) {
+  const { roomid } = use(params);
+  const ROOM_ID = roomid;
   const [selectedMedia, setSelectedMedia] = useState<MediaItem | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGenre, setSelectedGenre] = useState("All");
@@ -61,8 +63,6 @@ export default function LobbyPage() {
     setIsHydrated(true);
   }, []);
 
-  const ROOM_ID = roomMeta?.roomId || "";
-
   useEffect(() => {
     if (isHydrated && !roomMeta) {
       router.push("/auth");
@@ -72,8 +72,11 @@ export default function LobbyPage() {
 
   useEffect(() => {
     const fetchMovies = async () => {
+      console.log("🎬 fetchMovies triggered", { isHydrated, ROOM_ID });
       if (!isHydrated || !ROOM_ID) return;
+
       try {
+        console.log("🌐 Calling movie library API...");
         const authHeader = await getAuthHeader();
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_BACKEND_URL}/movie-library`,
@@ -85,20 +88,23 @@ export default function LobbyPage() {
             },
           }
         );
+
+        console.log("📡 API Response Status:", response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log("Fetched movies, Movies Count=", data.count);
+          console.log("✅ Fetched movies successfully, Count=", data.count);
           setMovieLibrary(data.movies);
         } else {
-          console.error("Failed to fetch movies:", response.statusText);
+          const errorData = await response.json().catch(() => ({}));
+          console.error("❌ Failed to fetch movies:", response.statusText, errorData);
         }
       } catch (error) {
-        console.error("Error fetching movies:", error);
+        console.error("🚨 Error fetching movies:", error);
       }
     };
 
     fetchMovies();
-  }, [ROOM_ID]);
+  }, [ROOM_ID, isHydrated]);
 
 
 
@@ -151,6 +157,11 @@ export default function LobbyPage() {
     }
   };
 
+  // Leave Room Logic
+  const handleLeave = () => {
+    router.push("/start");
+  };
+
   return (
     <main className="min-h-screen bg-[#09090B] relative overflow-hidden font-sans selection:bg-blue-500/30">
       {/* Backgrounds */}
@@ -158,36 +169,22 @@ export default function LobbyPage() {
         <div className="absolute inset-0 bg-linear-to-b from-blue-950/20 via-transparent to-purple-950/10 pointer-events-none" />
       </div>
 
-      {/* Connection Status Indicator */}
-      {isHydrated && isConnecting && !isConnected && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-yellow-500/20 border border-yellow-500/50 rounded-lg">
-          <Loader className="h-4 w-4 animate-spin text-yellow-400" />
-          <span className="text-sm text-yellow-300">Reconnecting...</span>
-        </div>
-      )}
-
-      {isHydrated && isConnected && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-green-500/20 border border-green-500/50 rounded-lg">
-          <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
-          <span className="text-sm text-green-300">Connected</span>
-        </div>
-      )}
-
-      {/* Room Error */}
+      {/* Room Status/Errors */}
       {isHydrated && error && (
-        <div className="fixed top-4 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg">
+        <div className="fixed top-20 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg">
           <AlertCircle className="h-4 w-4 text-red-400" />
           <span className="text-sm text-red-300">{error}</span>
         </div>
       )}
 
-      {/* Room Connected */}
       {isHydrated && roomConnected && !error && (
-        <div className="fixed top-16 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-lg">
+        <div className="fixed top-20 right-4 z-50 flex items-center gap-2 px-4 py-2 bg-blue-500/20 border border-blue-500/50 rounded-lg">
           <div className="h-2 w-2 bg-blue-400 rounded-full animate-pulse" />
           <span className="text-sm text-blue-300">Joined room: {ROOM_ID}</span>
         </div>
       )}
+
+
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col min-h-screen">
@@ -195,7 +192,7 @@ export default function LobbyPage() {
 
         {/* Content Area */}
         <div className="mt-20 flex gap-5">
-          <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} />
+          <RoomHeader roomId={ROOM_ID} roomPassword={roomMeta?.roomPassword} onLeave={handleLeave} />
 
         </div>
 

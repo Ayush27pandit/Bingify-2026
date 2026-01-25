@@ -1,15 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { Copy, Check, Shield, Eye, EyeOff } from "lucide-react";
+import { Copy, Check, Shield, Eye, EyeOff, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface RoomHeaderProps {
     roomId: string;
     roomPassword?: string;
+    onLeave?: () => void;
 }
 
-export function RoomHeader({ roomId, roomPassword = "••••••" }: RoomHeaderProps) {
+export function RoomHeader({ roomId, roomPassword = "••••••", onLeave }: RoomHeaderProps) {
     const [copiedId, setCopiedId] = useState(false);
     const [copiedPass, setCopiedPass] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
@@ -77,10 +78,19 @@ export function RoomHeader({ roomId, roomPassword = "••••••" }: Room
 
                     </div>
 
-                    {/* Share Button (Mobile hidden or minimal) */}
-                    <button className="hidden md:flex text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
-                        Share invite link
-                    </button>
+                    {/* Actions */}
+                    <div className="flex items-center gap-4">
+                        <button className="hidden md:flex text-sm font-medium text-blue-400 hover:text-blue-300 transition-colors">
+                            Share invite link
+                        </button>
+                        <button
+                            onClick={onLeave}
+                            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 transition-all text-sm font-medium group"
+                        >
+                            <LogOut className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                            Leave Room
+                        </button>
+                    </div>
                 </div>
             </div>
         </motion.div>

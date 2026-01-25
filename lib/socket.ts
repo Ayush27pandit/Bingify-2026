@@ -5,6 +5,11 @@ export const socket = io("http://localhost:8000", {
   reconnectionDelay: 1000,
   reconnectionDelayMax: 5000,
   reconnectionAttempts: 5,
+  autoConnect: false, // Don't connect automatically, we need the token first
+  auth: (cb) => {
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("firebaseIdToken") : null;
+    cb({ token });
+  },
 });
 
 // Global error handling

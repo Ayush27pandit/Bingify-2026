@@ -6,23 +6,36 @@ import { motion } from "framer-motion";
 import { Maximize2, Mic, MicOff, Video, VideoOff, PhoneOff, Settings, Users, Play } from "lucide-react";
 import MuxPlayer from "@mux/mux-player-react";
 import { MediaItem } from "./MediaGrid";
+import { useRoomConnection } from "@/lib/useRoomConnection";
 
 interface MovieRoomProps {
     media: MediaItem;
     roomId: string;
+    roomPassword?: string;
     muxPlaybackId: string;
     muxAssetId: string;
     onLeave: () => void;
 }
 
-export function MovieRoom({ media, roomId, muxPlaybackId, muxAssetId, onLeave }: MovieRoomProps) {
+export function MovieRoom({ media, roomId, roomPassword, muxPlaybackId, muxAssetId, onLeave }: MovieRoomProps) {
     const [isPlayerReady, setIsPlayerReady] = useState(false);
     const [hasStarted, setHasStarted] = useState(false);
+    //connecting room socket
+    const { roomConnected, error } = useRoomConnection(roomId);
+
+
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] mt-20 gap-6 px-6 pb-6 overflow-hidden">
+            {roomConnected ? (
+                <div>user connected</div>
+            ) : (
+                <div>user not connected</div>
+            )}
             <div className="flex flex-1 gap-6 min-h-0">
+
                 {/* Main Video Screen */}
                 <motion.div
+
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     className="flex-1 relative bg-black rounded-3xl overflow-hidden shadow-2xl border border-white/5 group"
@@ -165,7 +178,12 @@ export function MovieRoom({ media, roomId, muxPlaybackId, muxAssetId, onLeave }:
                     </div>
                     <div>
                         <div className="text-white text-sm font-semibold truncate max-w-[200px]">{media.title}</div>
-                        <div className="text-zinc-500 text-[10px] uppercase tracking-wider font-bold">In Room: {roomId}</div>
+                        <div className="flex items-center gap-2">
+                            <div className="text-zinc-500 text-[10px] uppercase tracking-wider font-bold bg-white/5 px-2 py-0.5 rounded">ID: {roomId}</div>
+                            {roomPassword && (
+                                <div className="text-blue-400 text-[10px] uppercase tracking-wider font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">PASS: {roomPassword}</div>
+                            )}
+                        </div>
                     </div>
                 </div>
 

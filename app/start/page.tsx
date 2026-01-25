@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { ArrowLeft, Plus, Users, ArrowRight } from "lucide-react";
@@ -8,6 +8,7 @@ import { ParticleBackground } from "@/components/landing/ParticleBackground";
 import { Header } from "@/components/shared/Header";
 import { useRouter } from "next/navigation";
 import { getAuthHeader } from "@/lib/auth-token";
+import { useSocketConnection } from "@/lib/useSocketConnection";
 
 const EASE_EXPO: [number, number, number, number] = [0.16, 1, 0.3, 1];
 
@@ -20,6 +21,9 @@ export default function StartPage() {
 
   // Mock room creation - in real app this would call API
   const router = useRouter();
+  const { isConnected, isConnecting } = useSocketConnection();
+
+
 
   // Create Room Handler
   const handleNewRoom = async () => {
@@ -58,7 +62,51 @@ export default function StartPage() {
   };
 
   const handleJoinRoom = async () => {
-    console.log("Joining room:", roomCodeJoin, passwordJoin);
+    try {
+      setError("");
+      const headers = await getAuthHeader();
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...headers,
+          },
+          body: JSON.stringify({
+            roomId: roomCodeJoin,
+            password: passwordJoin,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || "Failed to join room");
+      }
+
+      const data = await response.json();
+      console.log("Joined room successfully:", data);
+
+      // Store room meta for the lobby
+      sessionStorage.setItem(
+        "roomMeta",
+        JSON.stringify({
+          roomId: data.roomId,
+          roomPassword: passwordJoin,
+          hostToken: data.hostToken,
+        })
+      );
+
+      if (data.isActive && data.movieId) {
+        router.push(`/lobby/${data.roomId}/activate?movieId=${data.movieId}`);
+      } else {
+        router.push(`/lobby/${data.roomId}`);
+      }
+    } catch (err: any) {
+      console.error("Join room error:", err);
+      setError(err.message || "Something went wrong. Please try again.");
+    }
   };
 
   return (
@@ -222,6 +270,16 @@ export default function StartPage() {
                         <ArrowRight className="h-4 w-4" />
                       </button>
                     </div>
+
+                    {error && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="mt-4 text-center text-sm text-red-400"
+                      >
+                        {error}
+                      </motion.p>
+                    )}
                   </motion.div>
                 )}
               </AnimatePresence>

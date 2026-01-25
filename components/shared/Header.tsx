@@ -6,8 +6,11 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { firebaseLogout } from "@/lib/auth";
 import { LogOut, User as UserIcon } from "lucide-react";
 import Link from "next/link";
+import { useSocketConnection } from "@/lib/useSocketConnection";
+import { Loader } from "lucide-react";
 
 export function Header() {
+    const { isConnected, isConnecting } = useSocketConnection();
     const [user, setUser] = useState<User | null>(null);
     const router = useRouter();
     const auth = getAuth();
@@ -67,6 +70,20 @@ export function Header() {
 
                 {/* User Profile & Logout */}
                 <div className="flex items-center gap-4">
+                    {/* Socket Status */}
+                    {isConnecting && !isConnected && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-yellow-500/10 border border-yellow-500/20 rounded-full">
+                            <Loader className="h-3 w-3 animate-spin text-yellow-400" />
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-yellow-400">Connecting</span>
+                        </div>
+                    )}
+                    {isConnected && (
+                        <div className="flex items-center gap-2 px-3 py-1 bg-green-500/10 border border-green-500/20 rounded-full">
+                            <div className="h-1.5 w-1.5 bg-green-400 rounded-full animate-pulse" />
+                            <span className="text-[10px] uppercase tracking-wider font-bold text-green-400">Connected</span>
+                        </div>
+                    )}
+
                     {user && (
                         <div className="hidden md:flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-2 pr-4 py-1.5 backdrop-blur-md">
                             {user.photoURL ? (
