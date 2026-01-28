@@ -30,22 +30,22 @@ export function Header() {
                 credentials: "include",
             });
 
-            // 2. Clear Next.js session cookie (Server Action / API Route)
+
             await fetch("/api/logout", {
                 method: "POST",
             });
 
-            // 3. Clear session storage
+
             sessionStorage.removeItem("roomMeta");
             sessionStorage.removeItem("firebaseIdToken");
 
-            // 3. Firebase logout
+
             await firebaseLogout();
 
-            // Clear cookies manually just in case they are not HttpOnly
+
             document.cookie = "session=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
 
-            // 4. Force Reload/Redirect to ensure middleware sees the cleared cookie
+
             setTimeout(() => {
                 window.location.assign("/auth");
             }, 100);

@@ -10,6 +10,8 @@ import { MediaFilters } from "@/components/lobby/MediaFilters";
 import { Play, Loader, AlertCircle } from "lucide-react";
 import { useSocketConnection } from "@/lib/useSocketConnection";
 import { useRoomConnection } from "@/lib/useRoomConnection";
+import { useRoomNotifications } from "@/lib/useRoomNotifications";
+import { RoomNotifications } from "@/components/shared/RoomNotifications";
 import { useRouter } from "next/navigation";
 import { getAuthHeader } from "@/lib/auth-token";
 import { MovieRoom } from "@/components/lobby/MovieRoom";
@@ -111,6 +113,9 @@ export default function LobbyPage({ params }: { params: Promise<{ roomid: string
   // Room connection status
   const { roomConnected, error } = useRoomConnection(ROOM_ID);
 
+  // Room notifications (user joined/left)
+  const { notifications, removeNotification } = useRoomNotifications();
+
   // Filter Logic
   const filteredMedia = useMemo(() => {
     return movieLibrary.filter((item) => {
@@ -184,6 +189,8 @@ export default function LobbyPage({ params }: { params: Promise<{ roomid: string
         </div>
       )}
 
+      {/* Room Notifications (user joined/left toasts) */}
+      <RoomNotifications notifications={notifications} onDismiss={removeNotification} />
 
 
       {/* Main Content */}

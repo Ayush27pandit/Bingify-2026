@@ -19,7 +19,7 @@ export default function AuthButtons() {
       sessionStorage.setItem("firebaseIdToken", token);
     }
     try {
-      const response = await fetch("http://localhost:8000/auth/session", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/session`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,

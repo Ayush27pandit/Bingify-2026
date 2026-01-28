@@ -53,4 +53,15 @@ body {
   .bg-grid-white {
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32' width='32' height='32' fill='none' stroke='white' stroke-opacity='0.1'%3E%3Cpath d='M0 .5H31.5V32'/%3E%3C/svg%3E");
   }
+
+  /* Hide Mux Player controls for viewers */
+  .hide-controls {
+    --controls: none !important;
+  }
+
+  .hide-controls::part(top),
+  .hide-controls::part(center),
+  .hide-controls::part(bottom) {
+    display: none !important;
+  }
 }

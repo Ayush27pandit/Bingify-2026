@@ -5,7 +5,7 @@ import { auth } from "./firebase";
 const TOKEN_KEY = "firebaseIdToken";
 
 export async function getAuthHeader(): Promise<Record<string, string>> {
-  // 1️⃣ Try sessionStorage first
+
   const cachedToken = typeof window !== "undefined" ? sessionStorage.getItem(TOKEN_KEY) : null;
 
   if (cachedToken) {
@@ -14,7 +14,7 @@ export async function getAuthHeader(): Promise<Record<string, string>> {
     };
   }
 
-  // 2️⃣ Fallback to Firebase
+  //  Fallback to Firebase
   const user = auth.currentUser;
 
   if (!user) {
@@ -24,7 +24,7 @@ export async function getAuthHeader(): Promise<Record<string, string>> {
 
   const token = await user.getIdToken();
 
-  // 3️⃣ Cache token
+  // 3️ Cache token
   if (typeof window !== "undefined") {
     sessionStorage.setItem(TOKEN_KEY, token);
   }

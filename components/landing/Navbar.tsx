@@ -21,7 +21,7 @@ export function Navbar() {
 
   const handleLogout = async () => {
     // 1️⃣ Clear backend session
-    await fetch("http://localhost:8000/auth/logout", {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/logout`, {
       method: "POST",
       credentials: "include",
     });

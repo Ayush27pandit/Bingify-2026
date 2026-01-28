@@ -8,7 +8,7 @@ export function useRoomConnection(roomId: string) {
   useEffect(() => {
     if (!roomId) return;
 
-    // Emit join-room event to server with potential hostToken
+    // Emit join-room event to server with  hostToken
     const savedMeta = sessionStorage.getItem("roomMeta");
     const roomMeta = savedMeta ? JSON.parse(savedMeta) : null;
     const hostToken = roomMeta?.roomId === roomId ? roomMeta.hostToken : undefined;
@@ -27,7 +27,7 @@ export function useRoomConnection(roomId: string) {
       }
     });
 
-    // Listen for room-specific events
+
     const handleRoomError = (data: any) => {
       console.error("Room error:", data);
       setError(data?.message || "Room connection error");
@@ -35,7 +35,7 @@ export function useRoomConnection(roomId: string) {
 
     socket.on("room-error", handleRoomError);
 
-    // Cleanup: leave room when component unmounts
+    //cleanup
     return () => {
       socket.emit("leave-room", { roomId });
       socket.off("room-error", handleRoomError);

@@ -6,7 +6,9 @@ import { MovieRoom } from "@/components/lobby/MovieRoom";
 import { MediaItem } from "@/components/lobby/MediaGrid";
 import { getAuthHeader } from "@/lib/auth-token";
 import { useRoomConnection } from "@/lib/useRoomConnection";
+import { useRoomNotifications } from "@/lib/useRoomNotifications";
 import { Header } from "@/components/shared/Header";
+import { RoomNotifications } from "@/components/shared/RoomNotifications";
 import { useSocketConnection } from "@/lib/useSocketConnection";
 
 interface RoomMeta {
@@ -57,6 +59,9 @@ export default function ActivatePage({
 
   // Connect to room socket
   const { roomConnected, error } = useRoomConnection(roomid);
+
+  // Room notifications (user joined/left)
+  const { notifications, removeNotification } = useRoomNotifications();
 
   // Fetch movie details
   useEffect(() => {
@@ -138,6 +143,9 @@ export default function ActivatePage({
         </div>
       )}
 
+      {/* Room Notifications (user joined/left toasts) */}
+      <RoomNotifications notifications={notifications} onDismiss={removeNotification} />
+
       <div className="relative z-10">
         <MovieRoom
           media={selectedMedia}
@@ -145,7 +153,7 @@ export default function ActivatePage({
           roomPassword={roomMeta?.roomPassword}
           muxAssetId={selectedMedia.muxAssetId}
           muxPlaybackId={selectedMedia.muxPlaybackId}
-          onLeave={() => router.push(`/lobby/${roomid}`)}
+          onLeave={() => router.push("/start")}
         />
       </div>
     </main>
