@@ -81,7 +81,7 @@ export default function LobbyPage({ params }: { params: Promise<{ roomid: string
         console.log("🌐 Calling movie library API...");
         const authHeader = await getAuthHeader();
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/movie-library`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/protected/movie-library`,
           {
             method: "GET",
             headers: {
@@ -136,7 +136,7 @@ export default function LobbyPage({ params }: { params: Promise<{ roomid: string
 
     try {
       const authHeader = await getAuthHeader();
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/activate-room`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/protected/activate-room`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

@@ -30,7 +30,7 @@ export default function StartPage() {
     try {
       const headers = await getAuthHeader();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/create-room`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/protected/create-room`,
         {
           method: "POST",
           headers: {
@@ -66,7 +66,7 @@ export default function StartPage() {
       setError("");
       const headers = await getAuthHeader();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_BACKEND_URL}/join-room`,
+        `${process.env.NEXT_PUBLIC_BACKEND_URL}/protected/join-room`,
         {
           method: "POST",
           headers: {

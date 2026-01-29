@@ -72,7 +72,7 @@ export default function ActivatePage({
         const authHeader = await getAuthHeader();
         // We fetch the whole library and find the movie since we don't have a direct get-movie endpoint visible
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_BACKEND_URL}/movie-library`,
+          `${process.env.NEXT_PUBLIC_BACKEND_URL}/protected/movie-library`,
           {
             method: "GET",
             headers: {

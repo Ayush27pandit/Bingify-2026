@@ -87,29 +87,17 @@ export function Hero() {
                                     <div className="h-3 w-3 rounded-full bg-yellow-500/80" />
                                     <div className="h-3 w-3 rounded-full bg-green-500/80" />
                                 </div>
-                                <div className="text-xs text-zinc-600 font-mono">bingify.app/dashboard</div>
+                                <div className="text-xs text-zinc-600 font-mono">bingify.app/lobby/room</div>
                                 <div className="w-16" />
                             </div>
 
                             {/* Main dashboard area */}
-                            <div className="aspect-[16/9] flex items-center justify-center p-8">
-                                <div className="grid grid-cols-3 gap-4 w-full max-w-4xl">
-                                    {/* Stats cards */}
-                                    {[
-                                        { label: "Active Sessions", value: "2,847", change: "+12%" },
-                                        { label: "Watch Time", value: "14.2K hrs", change: "+8%" },
-                                        { label: "Sync Rate", value: "99.7%", change: "Stable" },
-                                    ].map((stat, i) => (
-                                        <div
-                                            key={i}
-                                            className="rounded-xl border border-white/5 bg-white/[0.02] p-6"
-                                        >
-                                            <div className="text-sm text-zinc-500 mb-2">{stat.label}</div>
-                                            <div className="text-2xl font-semibold text-white mb-1">{stat.value}</div>
-                                            <div className="text-xs text-emerald-500">{stat.change}</div>
-                                        </div>
-                                    ))}
-                                </div>
+                            <div className="aspect-[16/9] w-full h-full relative">
+                                <img
+                                    src="https://wnvechfqaaomuauwzcjz.supabase.co/storage/v1/object/public/assests/Screenshot%202026-01-29%20120954.png"
+                                    alt="Bingify Dashboard"
+                                    className="w-full h-full object-cover"
+                                />
                             </div>
 
                             {/* Avatars in corner */}
